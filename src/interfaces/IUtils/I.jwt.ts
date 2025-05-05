@@ -1,3 +1,3 @@
 export interface IJWT{
-    generateToken (id: string): string
+    generateToken (id: string, role:string): string
 } 

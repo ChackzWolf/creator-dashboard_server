@@ -4,6 +4,8 @@ import { IAuthService } from '../interfaces/IServices/IAuthService';
 import { UserDocument } from '../models/user';
 import { IUserRepository } from '../interfaces/IRepositories/IUserRepository';
 import {IJWT} from '../interfaces/IUtils/I.jwt'
+import { AppError } from '../utils/errors';
+import { UserRole } from '../types/userRoles';
 
 export class AuthService implements IAuthService{
     
@@ -16,56 +18,62 @@ export class AuthService implements IAuthService{
     }
 
     async registerUser (userData: RegisterRequest): Promise<AuthResponse> {
-        const { username, email, password } = userData;
+        
+            const { username, email, password } = userData;
+            console.log(userData, 'fromt service register')
+            // Check if user already exists
+            const emailExists = await this.userRepository.findByEmail(email);
+            if (emailExists) {
+                console.log('Email already exists')
+                throw new AppError('Email already exists',409);
+            }
+            const userNameExists = await this.userRepository.findByUsername(username);
 
-        // Check if user already exists
-        const userExists = await this.userRepository.findByEmailOrUsername(email, username);
-        if (userExists) {
-            throw new Error('User already exists');
-        }
+            if (userNameExists) {
+                console.log('User already exists')
+                throw new AppError('Username already exists, try another one.',409);
+            }
+    
+            // Create user
+            const user = await this.userRepository.createUser(username,email,password);
+            console.log(user, 'created user')
+            if (!user) {
+                throw new AppError('Invalid user data', 400);
+            }
+    
+            // Return user data and token
+            return {
+                user: {
+                    _id: user._id.toString(),
+                    username: user.username,
+                    email: user.email,
+                },
+                token: this.jwt.generateToken(user._id.toString(), UserRole.User),
+            };
+            
 
-        // Create user
-        const user = await this.userRepository.createUser(username,email,password);
-
-        if (!user) {
-            throw new Error('Invalid user data');
-        }
-
-        // Return user data and token
-        return {
-            user: {
-                _id: user._id.toString(),
-                username: user.username,
-                email: user.email,
-            },
-            token: this.jwt.generateToken(user._id.toString()),
-        };
     };
 
 
     async loginUser (credentials: AuthCredentials): Promise<AuthResponse>{
         const { email, password } = credentials;
     
-        // Check for user email
         const user = await this.userRepository.findByEmail(email);
         if (!user) {
-            throw new Error('Invalid credentials');
+            throw new AppError('Invalid credentials',400);
         }
     
-        // Check if password matches
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            throw new Error('Invalid credentials');
+            throw new AppError('Invalid credentials',400);
         }
     
-        // Return user data and token
         return {
             user: {
-                _id: user._id.toString(),
-                username: user.username,
-                email: user.email,
+                ...user,
+                _id: user._id.toString(),                
             },
-            token: this.jwt.generateToken(user._id.toString()),
+            token: this.jwt.generateToken(user._id.toString(), UserRole.User),
         };
     };
 

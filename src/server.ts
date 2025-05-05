@@ -1,38 +1,25 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import userRoutes from './routes/user';
+import http from 'http';
+import app from './app';
+import connectDB from './configs/db';
 import { config } from './configs/env.configs';
 
 
 
-const app: Application = express();
+const PORT = config.PORT || 5000;
 
-const allowedOrigins = [
-  'https://task-management-app-one-blue.vercel.app',
-  'https://task-management-4449px69v-jackson-cheriyans-projects.vercel.app'
-];
 
-// const corsOptions = {
-//   origin: (origin:any, callback:any) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true, // Enable cookies and HTTP authentication
-// };
 
-app.use(cors());
+connectDB();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const server = http.createServer(app);
 
-// 
-app.use('/api/user', userRoutes);
-
-app.get('/', (req, res) => {
-  res.send('API is running...');
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
-export default app;
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err: Error) => {
+  console.log(`Error: ${err.message}`);
+  // Close server & exit process
+  server.close(() => process.exit(1));
+});

@@ -2,6 +2,7 @@
 import { BaseRepository } from './base.repository';
 import User, { UserDocument } from '../models/user';
 import { IUserRepository } from '../interfaces/IRepositories/IUserRepository';
+import { UserRole } from '../types/userRoles';
 
 export class UserRepository extends BaseRepository<UserDocument> implements IUserRepository{
     constructor() {
@@ -24,13 +25,17 @@ export class UserRepository extends BaseRepository<UserDocument> implements IUse
         return this.findById(id)
     }
 
-    async createUser (username:string, email:string, password:string):Promise<UserDocument | null>{
-        return this.create({
-            username,
-            email,
-            password,
-        });
-    }
+    async createUser(username: string, email: string, password: string): Promise<UserDocument | null> {
+        console.log('creating user');
+        try {
+          const createdUser = await this.create({ username, email, password, role: UserRole.User });
+          console.log('user created in repo:', createdUser);
+          return createdUser;
+        } catch (err) {
+          console.error('Error in createUser:', err);
+          return null;
+        }
+      }
 }
 
 export const userRepository = new UserRepository();

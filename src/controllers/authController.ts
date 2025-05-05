@@ -1,6 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, response, Response } from 'express';
 import { IAuthService } from '../interfaces/IServices/IAuthService';
 import { IAuthController } from '../interfaces/IControllers/IAuthController';
+import { errorResponse, successResponse } from '../utils/response';
+import { AppError } from '../utils/errors';
+import { AuthRequest } from '../utils/middleware/authMiddleware';
 
 // Register a new user
 
@@ -14,10 +17,20 @@ export class AuthController implements IAuthController {
 
   async register  (req: Request, res: Response): Promise<void>{
     try {
+      console.log('reached register, ', req.body);
       const result = await this.authService.registerUser(req.body);
-      res.status(201).json(result);
-    } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : 'An error occurred' });
+      console.log(result, 'result registering user from controller')
+      res.status(201).json(successResponse(result.user, "User created success fully."));
+    } catch (error:any) {
+      if (error instanceof AppError) {
+        const statusCode = error.statusCode;
+        const message = error.message || 'An unexpected error occurred';
+        console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+        res.status(statusCode).json(errorResponse(message));
+      } else {
+        console.log('Unknown error occurred', error);
+        res.status(500).json(errorResponse('An unexpected error occurred'));
+      }
     }
   };
 
@@ -26,11 +39,38 @@ export class AuthController implements IAuthController {
     try {
       console.log('trigered', req.body)
       const result = await this.authService.loginUser(req.body);
-      res.status(200).json(result);
+      console.log('response,', result)
+      res.status(200).json(successResponse(result, "User created success fully."));
+      
     } catch (error) {
-      res.status(401).json({ message: error instanceof Error ? error.message : 'An error occurred' });
+      if (error instanceof AppError) {
+        const statusCode = error.statusCode;
+        const message = error.message || 'An unexpected error occurred';
+        console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+        res.status(statusCode).json(errorResponse(message));
+      } else {
+        console.log('Unknown error occurred', error);
+        res.status(500).json(errorResponse('An unexpected error occurred'));
+      }    
     }
   };
+
+  // async getCurrentUser(req: AuthRequest, res: Response){
+  //   try {
+  //     const userId = req.userId
+  //     const response = await 
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       const statusCode = error.statusCode;
+  //       const message = error.message || 'An unexpected error occurred';
+  //       console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+  //       res.status(statusCode).json(errorResponse(message));
+  //     } else {
+  //       console.log('Unknown error occurred', error);
+  //       res.status(500).json(errorResponse('An unexpected error occurred'));
+  //     } 
+  //   }
+  }
 
 //   async getProfile (req: Request, res: Response): Promise<void>{
 //     try {
@@ -46,4 +86,4 @@ export class AuthController implements IAuthController {
 //     }
 //   };
 
-}
+

@@ -5,6 +5,7 @@ export interface IUser {
     profileCompleted: boolean;
     profilePicture?: string;
     password: string;
+    redditRefreshToken?:string;
   }
 
     

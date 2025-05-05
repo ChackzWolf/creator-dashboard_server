@@ -42,8 +42,13 @@ const userSchema = new Schema<UserDocument>(
     profilePicture: {
       type: String,
     },
+    redditRefreshToken: {
+      type:String,
+      required:false,
+      default:''
+    }
   },
-  {
+  { 
     timestamps: true,
   }
 );
