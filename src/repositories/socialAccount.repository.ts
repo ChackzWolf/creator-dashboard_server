@@ -1,6 +1,6 @@
-import { ISocialAccountRepository } from '../interfaces/IRepositories/ISocialAccountRepository';
-import { ISocialAccount } from '../models/socialAccounts';
-import SocialAccountModel from '../models/socialAccounts';
+import { ISocialAccountRepository } from '../interfaces/IRepositories/ISocialAccountRepository.js';
+import { ISocialAccount } from '../models/socialAccounts.js';
+import SocialAccountModel from '../models/socialAccounts.js';
 import { Types } from 'mongoose';
 
 export class SocialAccountRepository implements ISocialAccountRepository{
@@ -13,20 +13,23 @@ export class SocialAccountRepository implements ISocialAccountRepository{
     return await SocialAccountModel.findById(id).exec();
   }
 
-  async findByUserIdAndPlatform(userId: Types.ObjectId, platform: string): Promise<ISocialAccount | null> {
-    return await SocialAccountModel.findOne({ userId, platform }).exec();
+  async findByUserIdAndPlatform(userId: string | Types.ObjectId, platform: string): Promise<ISocialAccount | null> {
+    const objectUserId = new Types.ObjectId(userId)
+    return await SocialAccountModel.findOne({ userId: objectUserId, platform }).exec();
   }
 
-  async updateById(id: string, data: Partial<ISocialAccount>): Promise<ISocialAccount | null> {
-    return await SocialAccountModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  async updateByUserId(userId: string, data: Partial<ISocialAccount>): Promise<ISocialAccount | null> {
+    const objectUserId = new Types.ObjectId(userId)
+    return await SocialAccountModel.findByIdAndUpdate({userId:objectUserId}, data, { new: true }).exec();
   }
 
   async deleteById(id: string): Promise<ISocialAccount | null> {
     return await SocialAccountModel.findByIdAndDelete(id).exec();
   }
 
-  async listByUserId(userId: Types.ObjectId): Promise<ISocialAccount[]> {
-    return await SocialAccountModel.find({ userId }).exec();
+  async listByUserId(userId: Types.ObjectId | string): Promise<ISocialAccount[]> {
+    const objectUserId = new Types.ObjectId(userId)
+    return await SocialAccountModel.find({ userId:objectUserId }).exec();
   }
 }
 

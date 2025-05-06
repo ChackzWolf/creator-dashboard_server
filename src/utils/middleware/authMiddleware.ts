@@ -1,10 +1,15 @@
 // middleware/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from '../errors';
+import { AppError } from '../errors.js';
 
 export interface AuthRequest extends Request {
   userId?: string;
+
+}
+export interface CustomRequest extends Request {
+  userId?: string;
+  body:any
 }
 
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {

@@ -1,4 +1,4 @@
-import { AuthRequest } from "../../utils/middleware/authMiddleware";
+import { AuthRequest } from "../../utils/middleware/authMiddleware.js";
 import { Response } from "express";
 
 export interface IUserController {

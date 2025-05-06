@@ -1,9 +1,7 @@
 import http from 'http';
-import app from './app';
-import connectDB from './configs/db';
-import { config } from './configs/env.configs';
-
-
+import app from './app.js';
+import connectDB from './configs/db.js';
+import { config } from './configs/env.configs.js';
 
 const PORT = config.PORT || 5000;
 

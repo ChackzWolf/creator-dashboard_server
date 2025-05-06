@@ -1,11 +1,11 @@
 
-import { AuthResponse, RegisterRequest, AuthCredentials } from '../types/user';
-import { IAuthService } from '../interfaces/IServices/IAuthService';
-import { UserDocument } from '../models/user';
-import { IUserRepository } from '../interfaces/IRepositories/IUserRepository';
-import {IJWT} from '../interfaces/IUtils/I.jwt'
-import { AppError } from '../utils/errors';
-import { UserRole } from '../types/userRoles';
+import { AuthResponse, RegisterRequest, AuthCredentials } from '../types/user.js';
+import { IAuthService } from '../interfaces/IServices/IAuthService.js';
+import { UserDocument } from '../models/user.js';
+import { IUserRepository } from '../interfaces/IRepositories/IUserRepository.js';
+import {IJWT} from '../interfaces/IUtils/I.jwt.js';
+import { AppError } from '../utils/errors.js';
+import { UserRole } from '../types/userRoles.js';
 
 export class AuthService implements IAuthService{
     

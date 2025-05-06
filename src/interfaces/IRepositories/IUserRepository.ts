@@ -1,4 +1,4 @@
-import { UserDocument } from "../../models/user"
+import { UserDocument } from "../../models/user.js"
 
 export interface IUserRepository {
     findByEmail(email: string): Promise<UserDocument | null>

@@ -1,8 +1,8 @@
 // src/repositories/user.repository.ts
-import { BaseRepository } from './base.repository';
-import User, { UserDocument } from '../models/user';
-import { IUserRepository } from '../interfaces/IRepositories/IUserRepository';
-import { UserRole } from '../types/userRoles';
+import { BaseRepository } from './base.repository.js';
+import User, { UserDocument } from '../models/user.js';
+import { IUserRepository } from '../interfaces/IRepositories/IUserRepository.js';
+import { UserRole } from '../types/userRoles.js';
 
 export class UserRepository extends BaseRepository<UserDocument> implements IUserRepository{
     constructor() {

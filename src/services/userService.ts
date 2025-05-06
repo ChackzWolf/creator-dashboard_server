@@ -23,6 +23,7 @@ export class UserService implements IUserService
         if (!user) {
             throw new AppError('User not found', 404);
         }
+        console.log(user, '/////////////////////////////////user data')
         return user;
     };
 }

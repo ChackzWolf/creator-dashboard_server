@@ -1,9 +1,9 @@
 import { Request, response, Response } from 'express';
-import { IAuthService } from '../interfaces/IServices/IAuthService';
-import { IAuthController } from '../interfaces/IControllers/IAuthController';
-import { errorResponse, successResponse } from '../utils/response';
-import { AppError } from '../utils/errors';
-import { AuthRequest } from '../utils/middleware/authMiddleware';
+import { IAuthService } from '../interfaces/IServices/IAuthService.js';
+import { IAuthController } from '../interfaces/IControllers/IAuthController.js';
+import { errorResponse, successResponse } from '../utils/response.js';
+import { AppError } from '../utils/errors.js';
+import { AuthRequest } from '../utils/middleware/authMiddleware.js';
 
 // Register a new user
 

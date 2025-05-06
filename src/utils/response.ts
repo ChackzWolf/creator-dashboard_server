@@ -1,4 +1,4 @@
-import { ApiResponse } from '../types/apiResponse';
+import { ApiResponse } from '../types/apiResponse.js';
 
 export function successResponse<T>(data: T, message?: string): ApiResponse<T> {
     console.log('executing success response', data, message);

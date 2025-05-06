@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { config } from './env.configs';
+import { config } from './env.configs.js';
 
 dotenv.config();
 

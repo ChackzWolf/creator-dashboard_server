@@ -1,9 +1,13 @@
 
 import { Request, Response } from "express";
-import { config } from "../configs/env.configs";
-import { SocialPlatform } from "../types/socialPlatforms";
-import { ISocialAccountService } from "../interfaces/IServices/ISocialMediaService";
-import { ISocialAccount } from "../models/socialAccounts";
+import { config } from "../configs/env.configs.js";
+import { RedditPostData, SocialPlatform } from "../types/socialPlatforms.js";
+import { ISocialAccountService } from "../interfaces/IServices/ISocialMediaService.js";
+import socialAccounts, { ISocialAccount } from "../models/socialAccounts.js";
+import { errorResponse, successResponse } from "../utils/response.js";
+import { CustomRequest } from "../utils/middleware/authMiddleware.js";
+import { AppError } from "../utils/errors.js";
+import { FeedSource } from "../models/socialPost.js";
 
 export class SocialAuthController {
     socialMediaService: ISocialAccountService;
@@ -21,7 +25,7 @@ export class SocialAuthController {
 
         // Prevent duplicate processing by checking if response is already sent
         let isResponseSent = false;
-
+ 
         // Log the credentials being used
         console.log(`[${requestId}] Using credentials:`, {
             codeLength: code.length,
@@ -158,7 +162,7 @@ export class SocialAuthController {
                 }
 
 
-                const socialAccountData: ISocialAccount = {
+                const socialAccountData: Partial<ISocialAccount> = {
                     userId: userId,
                     platform: SocialPlatform.REDDIT,
                     accessToken: tokenData.access_token,
@@ -166,10 +170,12 @@ export class SocialAuthController {
                     tokenExpiry: expiryDate,
                     platformUserId: platformUserId,
                     platformUsername: platformUsername,
-                    profileData: profileData
-                }
-                await this.socialMediaService.addSocialAccount(socialAccountData)
+                    profileData: profileData,
+                  };
+                const response = await this.socialMediaService.addSocialAccount(socialAccountData)
 
+                res.status(200).json(successResponse(tokenData, response.message));
+                return
             } catch (profileErr) {
                 console.error(`[${requestId}] ❌ Error fetching profile:`, profileErr);
                 // Don't block the token response
@@ -177,7 +183,7 @@ export class SocialAuthController {
             
             if (!isResponseSent) {
                 isResponseSent = true;
-                 res.json(tokenData);
+                 res.json(successResponse(tokenData, "response token"));
                  return
             }
         } catch (err) {
@@ -189,4 +195,167 @@ export class SocialAuthController {
             }
         }
     }
+
+
+    async getRedditPosts(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            
+            // Get the social account from database
+            const result = await this.socialMediaService.getSocialAccount(userId, SocialPlatform.REDDIT);
+            
+            if (!result) {
+                throw new Error;
+            }
+            const socialAccount = result.data;
+            
+            // Check if token is expired and needs refresh
+            const now = new Date();
+            if (now >= socialAccount.tokenExpiry) {
+                try {
+                    // Refresh the token
+                    const newTokenData = await this.socialMediaService.refreshRedditToken(socialAccount.refreshToken);
+                    
+                    // Update the token in database
+                    const expiryDate = new Date(Date.now() + newTokenData.expires_in * 1000);
+                    
+                    await this.socialMediaService.updateSocialAccount(
+                        userId, 
+                        SocialPlatform.REDDIT, 
+                        {
+                            accessToken: newTokenData.access_token,
+                            tokenExpiry: expiryDate
+                        }
+                    );
+                    
+                    // Update the token for the current request
+                    socialAccount.accessToken = newTokenData.access_token;
+                } catch (refreshError) {
+                    console.error("Failed to refresh Reddit token:", refreshError);
+                    return res.status(401).json({ error: "Reddit authentication expired. Please reconnect your account." });
+                }
+            }
+            
+            // Fetch posts from Reddit API
+            const response = await fetch('https://oauth.reddit.com/user/me/submitted?limit=25', {
+                headers: {
+                    'Authorization': `Bearer ${socialAccount.accessToken}`,
+                    'User-Agent': 'CreatorDashboard/1.0.0 by ChackzWolf',
+                },
+            });
+            
+            if (!response.ok) {
+                return res.status(response.status).json({ 
+                    error: 'Failed to fetch Reddit posts',
+                    details: { status: response.status }
+                });
+            }
+            
+            const postsData = await response.json();
+            return res.status(200).json(successResponse(postsData.data, "Reddit posts fetched successfully"));
+        } catch (error) {
+            console.error('Error fetching Reddit posts:', error);
+            return res.status(500).json({ error: 'Failed to fetch Reddit posts' });
+        }
+    }
+
+
+    
+
+    async addRedditPost(req: CustomRequest, res: Response):Promise<void> {
+        try {
+            console.log(req.body)
+            const userId = req.userId;
+            console.log(userId);
+            const {platformPostId, author,title, mediaUrls, platformUrl, postedAt, platformData, content } = req.body;
+            
+            if (!userId || !platformPostId || !title) {
+                res.status(400).json({ error: "Missing required post data" });
+                return
+            }
+            
+            const postData : RedditPostData= {
+                userId,  
+                platform: SocialPlatform.REDDIT, 
+                platformPostId, 
+                title, 
+                author,
+                content: content || '', 
+                mediaUrls, 
+                platformUrl, 
+                postedAt, 
+                platformData, 
+                createdAt: new Date() 
+              };
+
+            console.log(postData, 'post data')
+            
+            const savedPost = await this.socialMediaService.createRedditPost(postData);
+            console.log(savedPost, 'saved post')
+            res.status(200).json(successResponse(savedPost, "Reddit post saved successfully"));
+        } catch (error) {
+            if (error instanceof AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json(errorResponse(message));
+            } else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json(errorResponse('An unexpected error occurred'));
+            }
+        }
+    }
+
+        async getFeed(req: Request, res: Response) {
+            try {
+              // Parse query parameters
+              const userId = req.query.userId as string;  // Optional - only if viewing a specific user's feed
+              const sources = req.query.sources 
+                ? (req.query.sources as string).split(',') as FeedSource['name'][]
+                : undefined;
+                
+              const sortBy = req.query.sortBy as 'recent' | 'popular' || 'recent';
+              const page = req.query.page ? parseInt(req.query.page as string) : 1;
+              const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+              
+              // Get feed items
+              const feedItems = await this.socialMediaService.getFeed({
+                userId,
+                sources,
+                sortBy,
+                page,
+                limit
+              });
+              
+               res.status(200).json({
+                success: true,
+                data: feedItems,
+                message: 'Feed items fetched successfully'
+              });
+              return
+            } catch (error) {
+              console.error('Error fetching feed:', error);
+              
+              if (error instanceof AppError) {
+                 res.status(error.statusCode).json({
+                  success: false,
+                  message: error.message
+                });
+                return
+              }
+              
+               res.status(500).json({
+                success: false,
+                message: 'Failed to fetch feed items'
+              });
+              return
+            }
+          
+    }
+
+    
+
+
+
+
 }

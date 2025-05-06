@@ -1,3 +1,24 @@
-import express from 'express';
-const router = express.Router();
-router.post('/register');
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const jwt_utils_js_1 = require("../utils/jwt.utils.js");
+const user_repository_js_1 = require("../repositories/user.repository.js");
+const authServices_js_1 = require("../services/authServices.js");
+const authController_js_1 = require("../controllers/authController.js");
+const authMiddleware_js_1 = require("../utils/middleware/authMiddleware.js");
+const userController_js_1 = require("../controllers/userController.js");
+const userService_js_1 = require("../services/userService.js");
+const router = express_1.default.Router();
+const jwt = new jwt_utils_js_1.JWT();
+const userRepository = new user_repository_js_1.UserRepository();
+const authService = new authServices_js_1.AuthService(userRepository, jwt);
+const authController = new authController_js_1.AuthController(authService);
+const userService = new userService_js_1.UserService(userRepository);
+const userController = new userController_js_1.UserController(userService);
+router.post('/register', authController.register.bind(authController));
+router.post('/login', authController.login.bind(authController));
+router.get('/me', authMiddleware_js_1.authenticateToken, userController.getCurrentUser.bind(userController));
+exports.default = router;
