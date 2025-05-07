@@ -10,5 +10,7 @@ export interface ISocialAccountService {
     getLinkedAccountsByUserId(userId: string): Promise<ISocialAccount[]>
     getRedditUserPosts(userId:string):Promise<{data:any, message: string}>
     createRedditPost(postData: RedditPostData): Promise<ISocialPost>
-    getFeed(filters: FeedFilters): Promise<FeedItem[]>
+    getFeed(filters: FeedFilters,myUserId:string): Promise<FeedItem[]>
+    toggleLikes(postId:string, userId:string): Promise<{liked:boolean}>
+    fetchSavedPosts(userId:string):Promise<FeedItem[]>
 }

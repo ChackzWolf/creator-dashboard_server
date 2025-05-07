@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export interface IUser {
     username: string;
     email: string;
@@ -6,6 +8,7 @@ export interface IUser {
     profilePicture?: string;
     password: string;
     redditRefreshToken?:string;
+    savedPosts: Types.ObjectId[]
   }
 
     
@@ -23,6 +26,15 @@ export interface AuthResponse {
   user: {
       _id: string;
       username: string;
+      email: string;
+  };
+  token: string;
+}
+
+export interface AdminAuthResponse {
+  admin: {
+    _id:string
+      name: string;
       email: string;
   };
   token: string;

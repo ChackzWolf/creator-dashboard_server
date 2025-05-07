@@ -9,6 +9,7 @@ import { FeedItem, FeedSource, ISocialPost } from "../models/socialPost.js";
 import { Types } from "mongoose";
 import { ISocialPostRepository } from "../interfaces/IRepositories/ISocialPostRepository.js";
 import { IUserRepository } from "../interfaces/IRepositories/IUserRepository.js";
+import { IPostLikeRepository } from "../interfaces/IRepositories/IPostLikeRepository.js";
 
 
 
@@ -16,11 +17,13 @@ export class SocialAccountService implements ISocialAccountService {
     socialMediaRepo: ISocialAccountRepository
     socialPostRepo: ISocialPostRepository;
     userRepository : IUserRepository;
+    postLikeRepo : IPostLikeRepository
 
-    constructor(socialMediaRepository: ISocialAccountRepository, socialPostRepository: ISocialPostRepository, userRepository:IUserRepository) {
-        this.socialMediaRepo = socialMediaRepository
-        this.socialPostRepo = socialPostRepository
-        this.userRepository = userRepository
+    constructor(socialMediaRepository: ISocialAccountRepository, socialPostRepository: ISocialPostRepository, userRepository:IUserRepository, postLikeRepo: IPostLikeRepository) {
+        this.socialMediaRepo = socialMediaRepository;
+        this.socialPostRepo = socialPostRepository;
+        this.userRepository = userRepository;
+        this.postLikeRepo = postLikeRepo;
     }
     async addSocialAccount(data: Partial<ISocialAccount>): Promise<{ message: string, data: ISocialAccount }> {
         console.log('data', data);
@@ -304,7 +307,7 @@ export class SocialAccountService implements ISocialAccountService {
       }
 
 
-      async getFeed(filters: FeedFilters): Promise<FeedItem[]> {
+      async getFeed(filters: FeedFilters,myUserId:string): Promise<FeedItem[]> {
         try {
           // Get posts from repository
           const posts = await this.socialPostRepo.findFeedPosts({
@@ -316,34 +319,76 @@ export class SocialAccountService implements ISocialAccountService {
           });
           
           // Transform posts to FeedItem format
-          return posts.map(post => this.transformPostToFeedItem(post));
+          const response = await Promise.all(
+            posts.map(post => this.transformPostToFeedItem(post, myUserId))
+          );
+            return response
         } catch (error) {
           console.error('Error in getFeed:', error);
           throw error;
         }
       }
       
-    private transformPostToFeedItem(post: ISocialPost): FeedItem {
-        // Transform media URLs to the format expected by FeedItem
-        const media: { type: "image" | "video"; url: string; }[] = post.mediaUrls.map(url => {
-          // Simple media type detection based on URL
-          const isVideo = url.includes('.mp4') || 
-                          url.includes('.mov') || 
-                          url.includes('video') ||
-                          // Type-safe check for is_video property
-                          (post.platformData !== null && 
-                           typeof post.platformData === 'object' && 
-                           'is_video' in post.platformData && 
-                           Boolean(post.platformData.is_video));
+      private async transformPostToFeedItem(post: ISocialPost, myUserId: string): Promise<FeedItem> {
+        // Initialize empty media array
+        const media: { type: "image" | "video"; url: string; }[] = [];
+        
+        // Check if we have platform data with video information
+        if (post.platformData && typeof post.platformData === 'object') {
+          const platformData = post.platformData as any; // Use type assertion to avoid TS errors
           
-          return {
-            type: isVideo ? "video" as const : "image" as const,
-            url: url
-          };
-        });
+          // Check for Reddit video
+          if (
+            platformData.is_video === true && 
+            platformData.media && 
+            platformData.media.reddit_video && 
+            platformData.media.reddit_video.fallback_url
+          ) {
+            // Add Reddit video
+            media.push({
+              type: "video" as const,
+              url: platformData.media.reddit_video.fallback_url
+            });
+          }
+          // Check for direct URL that might be a video or image
+          else if (platformData.url) {
+            const url = platformData.url as string;
+            // Determine if it's a video or image
+            const isVideo = url.includes('.mp4') || 
+                            url.includes('.mov') || 
+                            url.includes('v.redd.it');
+            
+            media.push({
+              type: isVideo ? "video" as const : "image" as const,
+              url: url
+            });
+          }
+        }
+        
+        // If no media found in platform data, use mediaUrls as fallback
+        if (media.length === 0 && post.mediaUrls && post.mediaUrls.length > 0) {
+          post.mediaUrls.forEach(url => {
+            const isVideo = url.includes('.mp4') || 
+                            url.includes('.mov') || 
+                            url.includes('v.redd.it');
+            
+            media.push({
+              type: isVideo ? "video" as const : "image" as const,
+              url: url
+            });
+          });
+        }
+        
+        const postId = post._id as string;
+        
+        const isLiked = await this.postLikeRepo.isLikedByUser(myUserId, postId);
+        const likes = await this.postLikeRepo.countLikes(postId);
+        const user = await this.userRepository.findUserById(myUserId);
+        const isSaved = user?.savedPosts.includes(new Types.ObjectId(postId)) || false;
         
         return {
-          id: String(post._id), // Convert _id to string safely
+          id: String(post._id),
+          platformData: post.platformData,
           source: post.platform as FeedSource['name'],
           sourceId: post.platformPostId,
           content: post.title ? `${post.title}\n\n${post.content}` : post.content,
@@ -354,10 +399,28 @@ export class SocialAccountService implements ISocialAccountService {
           },
           createdAt: post.postedAt.toISOString(),
           media: media.length > 0 ? media : undefined,
-          likes: post.likes,
+          likes,
           comments: post.comments,
           shares: post.shares,
-          isSaved: true // Since it's in the database, it's saved
+          isSaved,
+          isLiked,
+          userId: post.userId.toString()
+          
         };
       }
+
+    async toggleLikes(postId:string, userId:string): Promise<{liked:boolean}>{
+        const response = await this.postLikeRepo.toggleLike(postId,userId)
+        return response
+    }
+
+    async fetchSavedPosts(userId:string):Promise<FeedItem[]>{
+        const user = await this.userRepository.findUserById(userId)
+        const postIds  = user?.savedPosts;
+        const posts = await this.socialPostRepo.findPostsByIds(postIds as Types.ObjectId[])
+        const response = await Promise.all(
+            posts.map(post => this.transformPostToFeedItem(post, userId))
+          );
+        return response
+    }
 }

@@ -1,4 +1,3 @@
-// src/repositories/socialPostRepository.ts
 import mongoose, { Types } from 'mongoose';
 import SocialPost, { ISocialPost } from '../models/socialPost.js';
 import { ISocialPostRepository } from '../interfaces/IRepositories/ISocialPostRepository.js';
@@ -190,6 +189,13 @@ export class SocialPostRepository implements ISocialPostRepository {
       console.error('Error in findFeedPosts:', error);
       throw error;
     }
+  }
+
+
+  async findPostsByIds(postIds: Types.ObjectId[] | string[]): Promise<ISocialPost[]> {
+    return await SocialPost.find({
+      _id: { $in: postIds }
+    });
   }
 }
 

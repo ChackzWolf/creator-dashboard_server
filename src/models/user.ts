@@ -46,7 +46,13 @@ const userSchema = new Schema<UserDocument>(
       type:String,
       required:false,
       default:''
-    }
+    },
+    savedPosts: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'SocialPost', // 👈 if you want to populate later
+      }
+    ]
   },
   { 
     timestamps: true,

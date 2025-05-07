@@ -25,6 +25,9 @@ export interface FeedItem {
   comments: number;
   shares: number;
   isSaved: boolean;
+  isLiked: boolean;
+  platformData:any
+  userId:string
 }
 
 // Add this to match your frontend enums
@@ -159,7 +162,10 @@ SocialPostSchema.methods.toFeedItem = function(): FeedItem {
     likes: this.likes,
     comments: this.comments,
     shares: this.shares,
-    isSaved: true // Since it's being retrieved, we assume it's saved
+    isSaved: true ,
+    isLiked: false,
+    platformData: this.platformData,
+    userId: this.userId.toString()
   };
 };
 

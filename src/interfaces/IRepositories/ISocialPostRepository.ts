@@ -10,6 +10,7 @@ export interface ISocialPostRepository {
   create(postData: Partial<ISocialPost>): Promise<ISocialPost>;
   update(id: string, updateData: Partial<ISocialPost>): Promise<ISocialPost | null>;
   delete(id: string): Promise<boolean>;
-  findFeedPosts(filters: FeedFilters): Promise<ISocialPost[]
-  > 
+  findFeedPosts(filters: FeedFilters): Promise<ISocialPost[]>;
+  findPostsByIds(postIds: Types.ObjectId[] | string[]): Promise<ISocialPost[]>;
+  
 }

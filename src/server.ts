@@ -21,3 +21,4 @@ process.on('unhandledRejection', (err: Error) => {
   // Close server & exit process
   server.close(() => process.exit(1));
 });
+

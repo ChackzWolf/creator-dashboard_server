@@ -3,6 +3,8 @@ import { BaseRepository } from './base.repository.js';
 import User, { UserDocument } from '../models/user.js';
 import { IUserRepository } from '../interfaces/IRepositories/IUserRepository.js';
 import { UserRole } from '../types/userRoles.js';
+import { Types } from 'mongoose';
+import { IUser } from '../types/user.js';
 
 export class UserRepository extends BaseRepository<UserDocument> implements IUserRepository{
     constructor() {
@@ -35,6 +37,19 @@ export class UserRepository extends BaseRepository<UserDocument> implements IUse
           console.error('Error in createUser:', err);
           return null;
         }
+      }
+      async toggleSavePost(userId: Types.ObjectId | string, postId: Types.ObjectId | string): Promise<IUser | null> {
+        const user = await this.findById(userId.toString());
+        if (!user) return null;
+    
+        const objectPostId = new Types.ObjectId(postId);
+        const alreadySaved = user.savedPosts.some(savedId => savedId.equals(objectPostId));
+    
+        const updateOp = alreadySaved
+          ? { $pull: { savedPosts: objectPostId } }
+          : { $addToSet: { savedPosts: objectPostId } };
+    
+        return await this.update(userId.toString(), updateOp);
       }
 }
 

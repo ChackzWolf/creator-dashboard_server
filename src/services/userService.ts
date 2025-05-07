@@ -7,6 +7,7 @@ import {IJWT} from '../interfaces/IUtils/I.jwt'
 import { AppError } from '../utils/errors';
 import { UserRole } from '../types/userRoles';
 import { IUserService } from '../interfaces/IServices/IUserService';
+import { Types } from 'mongoose';
 
 export class UserService implements IUserService
 {
@@ -26,6 +27,11 @@ export class UserService implements IUserService
         console.log(user, '/////////////////////////////////user data')
         return user;
     };
+
+    async savePostToUser (userId:string, postId:string):Promise<boolean>{
+        const response = await this.userRepository.toggleSavePost(userId,postId)
+        return response?.savedPosts.includes(new Types.ObjectId(postId)) || false
+    }
 }
 
 

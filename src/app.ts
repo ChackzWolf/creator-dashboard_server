@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import userRoutes from './routes/user.js'
+import adminRoutes from './routes/admin.js'
 import socialRoutes from './routes/socialAuth.js'
 
 
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
  
 
 app.use('/api/user', userRoutes); 
+app.use('/api/admin', adminRoutes);
 app.use('/api/socialAuth', socialRoutes);
 
 export default app;

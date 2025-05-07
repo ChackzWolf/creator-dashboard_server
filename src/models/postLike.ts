@@ -1,20 +1,34 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema, Document, Types, model } from 'mongoose';
 
-const PostLikeSchema = new Schema({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+// 1. Interface
+export interface IPostLike extends Document {
+  userId: Types.ObjectId;
+  postId: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 2. Schema
+const PostLikeSchema = new Schema<IPostLike>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    postId: {
+      type: Schema.Types.ObjectId,
+      ref: 'SocialPost',
+      required: true,
+    },
   },
-  postId: {
-    type: Schema.Types.ObjectId,
-    ref: 'SocialPost',
-    required: true
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-// Compound index for uniqueness and queries
+// 3. Indexes
 PostLikeSchema.index({ userId: 1, postId: 1 }, { unique: true });
 PostLikeSchema.index({ postId: 1 });
 
-export default mongoose.model('PostLike', PostLikeSchema);
+// 4. Export
+const PostLikeModel = model<IPostLike>('PostLike', PostLikeSchema);
+export default PostLikeModel;

@@ -4,6 +4,7 @@ import SocialAccountModel from '../models/socialAccounts.js';
 import { Types } from 'mongoose';
 
 export class SocialAccountRepository implements ISocialAccountRepository{
+  
   async create(data: Partial<ISocialAccount>): Promise<ISocialAccount> {
     const account = new SocialAccountModel(data);
     return await account.save();
