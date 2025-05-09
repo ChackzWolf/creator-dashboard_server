@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { BaseRepository } from './base.repository'; // adjust path as needed
+import { BaseRepository } from './base.repository';
 import PostLikeModel, { IPostLike } from '../models/postLike';
 import { IPostLikeRepository } from '../interfaces/IRepositories/IPostLikeRepository';
 
