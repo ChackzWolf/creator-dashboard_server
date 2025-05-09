@@ -329,7 +329,7 @@ export class SocialAccountService implements ISocialAccountService {
         }
       }
       
-      private async transformPostToFeedItem(post: ISocialPost, myUserId: string): Promise<FeedItem> {
+      private async transformPostToFeedItem(post: ISocialPost, myUserId: string| null = null): Promise<FeedItem> {
         // Initialize empty media array
         const media: { type: "image" | "video"; url: string; }[] = [];
         
@@ -381,10 +381,10 @@ export class SocialAccountService implements ISocialAccountService {
         
         const postId = post._id as string;
         
-        const isLiked = await this.postLikeRepo.isLikedByUser(myUserId, postId);
-        const likes = await this.postLikeRepo.countLikes(postId);
-        const user = await this.userRepository.findUserById(myUserId);
-        const isSaved = user?.savedPosts.includes(new Types.ObjectId(postId)) || false;
+        const isLiked = myUserId ? await this.postLikeRepo.isLikedByUser(myUserId, postId) : false;
+        const likes = myUserId ?await this.postLikeRepo.countLikes(postId) : 0;
+        const user =myUserId ?  await this.userRepository.findUserById(myUserId) : null;
+        const isSaved = myUserId ? user?.savedPosts.includes(new Types.ObjectId(postId)) || false : false;
         
         return {
           id: String(post._id),
@@ -423,4 +423,15 @@ export class SocialAccountService implements ISocialAccountService {
           );
         return response
     }
+
+    async fetchPostById(id: string):Promise<FeedItem>{
+        const post = await this.socialPostRepo.findById(id);
+        if(!post){
+            throw new AppError("Connot find post by this id.",404)
+        }
+        const processedPost = await this.transformPostToFeedItem(post)
+        return processedPost
+    }
+
+
 }

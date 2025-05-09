@@ -1,5 +1,5 @@
 
-import { AuthResponse, RegisterRequest, AuthCredentials } from '../types/user';
+import { AuthResponse, RegisterRequest, AuthCredentials, IUser } from '../types/user';
 import { IAuthService } from '../interfaces/IServices/IAuthService';
 import { UserDocument } from '../models/user';
 import { IUserRepository } from '../interfaces/IRepositories/IUserRepository';
@@ -24,13 +24,18 @@ export class UserService implements IUserService
         if (!user) {
             throw new AppError('User not found', 404);
         }
-        console.log(user, '/////////////////////////////////user data')
         return user;
     };
 
     async savePostToUser (userId:string, postId:string):Promise<boolean>{
         const response = await this.userRepository.toggleSavePost(userId,postId)
         return response?.savedPosts.includes(new Types.ObjectId(postId)) || false
+    }
+
+    async fetchUsers(search:any = null):Promise<UserDocument[] | null>{
+        const users = await this.userRepository.getUsers(search)
+        return users
+
     }
 }
 

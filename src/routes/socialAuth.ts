@@ -29,6 +29,7 @@ router.post('/feed/save', authenticateToken, authSocialcontroller.savePost.bind(
 router.post('/feed/report', authenticateToken, authSocialcontroller.submitReport.bind(authSocialcontroller))
 router.get('/feed/saved', authenticateToken, authSocialcontroller.fetchSavedPosts.bind(authSocialcontroller))
 router.get('/feed',authenticateToken , authSocialcontroller.getFeed.bind(authSocialcontroller))
+router.get('/feed/:id', authenticateToken, authSocialcontroller.fetchPostById.bind(authSocialcontroller))
 
 router.get('/reports',adminAuthenticateToken, authSocialcontroller.fetchReports.bind(authSocialcontroller))
 

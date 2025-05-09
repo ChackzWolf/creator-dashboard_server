@@ -38,6 +38,7 @@ export class UserRepository extends BaseRepository<UserDocument> implements IUse
           return null;
         }
       }
+
       async toggleSavePost(userId: Types.ObjectId | string, postId: Types.ObjectId | string): Promise<IUser | null> {
         const user = await this.findById(userId.toString());
         if (!user) return null;
@@ -51,6 +52,20 @@ export class UserRepository extends BaseRepository<UserDocument> implements IUse
     
         return await this.update(userId.toString(), updateOp);
       }
+
+      async getUsers(search:any): Promise<UserDocument[] | null>{
+        let query:any = {}
+        console.log('filter:', search)
+        
+        if(search){
+          query.$or = [
+            { name: new RegExp(search, 'i') },
+            { email: new RegExp(search, 'i') }
+          ];
+        }
+        return  await User.find(query)
+      }
+
 }
 
 export const userRepository = new UserRepository();

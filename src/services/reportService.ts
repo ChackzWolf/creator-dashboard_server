@@ -18,4 +18,12 @@ export class ReportService implements IReportService{
         const response = await this.reportRepo.getReportedPostsWithDetails()
         return response
     }
+
+    async updateReportStatus(data:{reportId:string, status:"pending" | "reviewed" | "resolved"}):Promise<ReportedPostDocument | null>  {
+        const {reportId, status} = data;
+        const response = await this.reportRepo.updateStatus(reportId, status);
+
+        console.log(response, '///////////////');
+        return response
+    }
 }

@@ -15,15 +15,23 @@ export class ReportedPostRepository extends BaseRepository<ReportedPostDocument>
     return this.create(data)
   }
 
+  async updateStatus(
+    _id: string,
+    status: 'pending' | 'reviewed' | 'resolved' | 'dismissed',
+    adminNotes?: string
+  ): Promise<ReportedPostDocument | null> {
+    const update: any = { status };
+
+    if (adminNotes) update.adminNotes = adminNotes;
+  
+    return this.update(_id, update); // ✅ use the full update object
+  }
+
   async findByStatus(status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'): Promise<ReportedPostDocument[]> {
     return this.model.find({ status });
   }
 
-  async updateStatus(id: string, status: 'pending' | 'reviewed' | 'resolved' | 'dismissed', adminNotes?: string):Promise<ReportedPostDocument | null> {
-    const update: any = { status };
-    if (adminNotes) update.adminNotes = adminNotes;
-    return this.update(id, update);
-  }
+
 
   async getReportedPostsWithDetails(): Promise<ReportedPostDocument[]> {
     return this.model

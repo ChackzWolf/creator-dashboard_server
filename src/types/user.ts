@@ -8,7 +8,8 @@ export interface IUser {
     profilePicture?: string;
     password: string;
     redditRefreshToken?:string;
-    savedPosts: Types.ObjectId[]
+    savedPosts: Types.ObjectId[];
+    isBlocked:boolean;
   }
 
     

@@ -13,4 +13,5 @@ export interface ISocialAccountService {
     getFeed(filters: FeedFilters,myUserId:string): Promise<FeedItem[]>
     toggleLikes(postId:string, userId:string): Promise<{liked:boolean}>
     fetchSavedPosts(userId:string):Promise<FeedItem[]>
+    fetchPostById(id: string):Promise<FeedItem>
 }

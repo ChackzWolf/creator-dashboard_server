@@ -2,12 +2,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { Types } from 'mongoose';
 
 export interface ReportedPostDocument extends Document {
-  reportedBy: Types.ObjectId; // User who reported the post
-  reportedUser: Types.ObjectId; // User who created the post
-  postId: Types.ObjectId; // The post being reported
-  reason: string; // Why the post was reported
+  reportedBy: Types.ObjectId;
+  reportedUser: Types.ObjectId;
+  postId: Types.ObjectId; 
+  reason: string; 
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
-  adminNotes?: string; // Optional notes from admin review
+  adminNotes?: string;
   createdAt: Date;
   updatedAt: Date;
 }

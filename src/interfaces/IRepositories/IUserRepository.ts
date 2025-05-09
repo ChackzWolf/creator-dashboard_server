@@ -8,4 +8,6 @@ export interface IUserRepository {
     findByEmailOrUsername(email: string, username: string): Promise<UserDocument | null>
     findUserById(id:string):Promise<UserDocument | null>
     createUser (username:string, email:string, password:string): Promise<UserDocument | null>
-    toggleSavePost(userId: Types.ObjectId | string, postId: Types.ObjectId | string): Promise<IUser | null>}
+    toggleSavePost(userId: Types.ObjectId | string, postId: Types.ObjectId | string): Promise<IUser | null>
+    getUsers(filter:any): Promise<UserDocument[] | null>
+}

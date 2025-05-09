@@ -2,12 +2,19 @@ import { Response, Request } from "express";
 import { IAdminService } from "../interfaces/IServices/IAdminService";
 import { errorResponse, successResponse } from "../utils/response";
 import { AppError } from "../utils/errors";
+import { IReportService } from "../interfaces/IServices/IReportService";
+import { userRepository } from "../repositories/user.repository";
+import { IUserService } from "../interfaces/IServices/IUserService";
 
 export class AdminController {
     adminService: IAdminService;
+    userService: IUserService;
+    reportService: IReportService;
 
-    constructor(adminService: IAdminService) {
-        this.adminService = adminService
+    constructor(adminService: IAdminService,reportService: IReportService, userService:IUserService) {
+        this.adminService = adminService;
+        this.reportService=reportService;
+        this.userService = userService;
     }
 
     async login(req: Request, res: Response): Promise<void> {
@@ -36,6 +43,31 @@ export class AdminController {
         } catch (error) {
             console.log('Unknown error occurred', error);
             res.status(400).json(errorResponse('An unexpected error occurred'));
+        }
+    }
+
+    async updateReportStatus (req:Request, res:Response){
+        try {
+            console.log('started', req.body)
+            const data = req.body;
+            const response = await this.reportService.updateReportStatus(data)
+            console.log(response, 'statuss')
+            res.status(201).json(successResponse(response));
+        } catch (error) {
+            console.log('Unknown error occurred', error);
+            res.status(400).json(errorResponse('An unexpected error occurred'));
+        }
+    }
+
+    async getUserList(req: Request ,res:Response){
+        try {
+            const {search} = req.query;
+            console.log(req.query, 'data//////////////////////////')
+            const response = await this.userService.fetchUsers(search);
+            res.status(200).json(successResponse(response));
+        } catch (error) {
+            res.status(400).json(errorResponse("Something went wrong."));
+
         }
     }
 }

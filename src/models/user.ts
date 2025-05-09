@@ -47,6 +47,10 @@ const userSchema = new Schema<UserDocument>(
       required:false,
       default:''
     },
+    isBlocked: {
+      type:Boolean,
+      default:false
+    },
     savedPosts: [
       {
         type: Schema.Types.ObjectId,

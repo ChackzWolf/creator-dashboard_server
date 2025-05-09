@@ -474,4 +474,24 @@ export class SocialAuthController {
         }
     }
 
+
+
+    async fetchPostById(req:Request,  res: Response){
+        try {
+            const postId = req.params.id;
+            const response = await this.socialMediaService.fetchPostById(postId);
+            res.status(200).json(successResponse(response));
+        } catch (error) {
+            if (error instanceof AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json(errorResponse(message));
+            } else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json(errorResponse('An unexpected error occurred'));
+            }
+        }
+    }
+
 }
