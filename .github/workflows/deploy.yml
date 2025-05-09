@@ -2,7 +2,7 @@ name: Deploy to Cloud Run
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   deploy:
@@ -20,18 +20,13 @@ jobs:
     
     - name: Build and deploy
       run: |
-        # Set up environment for Docker build
-        cp .env.production .env
-        
-        # Build and deploy
         gcloud auth configure-docker
         docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/creator-app .
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/creator-app
         
-        # Deploy with just the sensitive environment variables from GitHub Secrets
         gcloud run deploy creator-dashboard \
           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/creator-app \
           --platform managed \
           --region us-central1 \
           --allow-unauthenticated \
-          --set-env-vars="MONGO_URI=${{ secrets.MONGO_URI }},JWT_SECRET=${{ secrets.JWT_SECRET }},REDDIT_CLIENT_SECRET=${{ secrets.REDDIT_CLIENT_SECRET }}"
+          --set-env-vars="MONGO_URI=mongodb+srv://jacksoncheriyan05:T0DWV48UFszQg3rd@cluster0.azednih.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0,NODE_ENV=production,CLIENT_URL=http://localhost:5173,JWT_SECRET=jwtsecret,REDDIT_CLIENT_ID=MKgEEtdN2M1NXnZn-VtVbA,REDDIT_REDIRECT_URI=http://localhost:5173/reddit-callback,REDDIT_CLIENT_SECRET=WmMnUn70iETFGkyZ-PdgKCENArgJyg"
