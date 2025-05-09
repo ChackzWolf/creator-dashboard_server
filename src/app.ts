@@ -8,21 +8,20 @@ import socialRoutes from './routes/socialAuth.js'
 
 const app: Application = express();
 
-// const allowedOrigins = [
-//   'https://task-management-app-one-blue.vercel.app',
-//   'https://task-management-4449px69v-jackson-cheriyans-projects.vercel.app'
-// ];
+const allowedOrigins = [
+  'https://creator-dashboard-client.web.app',
+];
 
-// const corsOptions = {
-//   origin: (origin:any, callback:any) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true, // Enable cookies and HTTP authentication
-// };
+const corsOptions = {
+  origin: (origin:any, callback:any) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Enable cookies and HTTP authentication
+};
 
 
 app.use(cors({
