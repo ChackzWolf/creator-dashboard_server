@@ -8,15 +8,19 @@ import { UserController } from '../controllers/userController.js';
 import { UserService } from '../services/userService.js';
 import { SocialAccountRepository } from '../repositories/socialAccount.repository.js';
 import { SocialAccountService } from '../services/socialMediaService.js';
+import { SocialPostRepository } from '../repositories/socialPost.repository.js';
+import { PostLikeRepository } from '../repositories/postLIke.repository.js';
 const router = express.Router();
 
 
 const jwt = new JWT();
 const userRepository = new UserRepository();
+const socialPostRepository = new SocialPostRepository();
+const postLikerepository = new PostLikeRepository()
 const authService = new AuthService(userRepository,jwt);
 const authController = new AuthController(authService);
 const socialAccountRepository = new SocialAccountRepository() 
-const socialAccountService = new SocialAccountService(socialAccountRepository)
+const socialAccountService = new SocialAccountService(socialAccountRepository ,socialPostRepository, userRepository, postLikerepository)
 const userService = new UserService(userRepository)
 const userController = new UserController(userService, socialAccountService)
                                                           
