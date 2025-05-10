@@ -8,6 +8,7 @@ exports.userRepository = exports.UserRepository = void 0;
 const base_repository_js_1 = require("./base.repository.js");
 const user_js_1 = __importDefault(require("../models/user.js"));
 const userRoles_js_1 = require("../types/userRoles.js");
+const mongoose_1 = require("mongoose");
 class UserRepository extends base_repository_js_1.BaseRepository {
     constructor() {
         super(user_js_1.default);
@@ -35,6 +36,28 @@ class UserRepository extends base_repository_js_1.BaseRepository {
             console.error('Error in createUser:', err);
             return null;
         }
+    }
+    async toggleSavePost(userId, postId) {
+        const user = await this.findById(userId.toString());
+        if (!user)
+            return null;
+        const objectPostId = new mongoose_1.Types.ObjectId(postId);
+        const alreadySaved = user.savedPosts.some(savedId => savedId.equals(objectPostId));
+        const updateOp = alreadySaved
+            ? { $pull: { savedPosts: objectPostId } }
+            : { $addToSet: { savedPosts: objectPostId } };
+        return await this.update(userId.toString(), updateOp);
+    }
+    async getUsers(search) {
+        let query = {};
+        console.log('filter:', search);
+        if (search) {
+            query.$or = [
+                { name: new RegExp(search, 'i') },
+                { email: new RegExp(search, 'i') }
+            ];
+        }
+        return await user_js_1.default.find(query);
     }
 }
 exports.UserRepository = UserRepository;

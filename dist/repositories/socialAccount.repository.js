@@ -26,7 +26,8 @@ class SocialAccountRepository {
         return await socialAccounts_js_1.default.findByIdAndDelete(id).exec();
     }
     async listByUserId(userId) {
-        return await socialAccounts_js_1.default.find({ userId }).exec();
+        const objectUserId = new mongoose_1.Types.ObjectId(userId);
+        return await socialAccounts_js_1.default.find({ userId: objectUserId }).exec();
     }
 }
 exports.SocialAccountRepository = SocialAccountRepository;

@@ -4,9 +4,12 @@ exports.SocialAuthController = void 0;
 const env_configs_js_1 = require("../configs/env.configs.js");
 const socialPlatforms_js_1 = require("../types/socialPlatforms.js");
 const response_js_1 = require("../utils/response.js");
+const errors_js_1 = require("../utils/errors.js");
 class SocialAuthController {
-    constructor(socialMediaService) {
+    constructor(socialMediaService, userService, reportService) {
         this.socialMediaService = socialMediaService;
+        this.userService = userService;
+        this.reportService = reportService;
     }
     async getRedditAccessToken(req, res) {
         console.log('token reddit triggered', req.body);
@@ -143,7 +146,8 @@ class SocialAuthController {
                     profileData: profileData,
                 };
                 const response = await this.socialMediaService.addSocialAccount(socialAccountData);
-                res.status(200).json((0, response_js_1.successResponse)(response.data, response.message));
+                res.status(200).json((0, response_js_1.successResponse)(tokenData, response.message));
+                return;
             }
             catch (profileErr) {
                 console.error(`[${requestId}] ❌ Error fetching profile:`, profileErr);
@@ -151,7 +155,7 @@ class SocialAuthController {
             }
             if (!isResponseSent) {
                 isResponseSent = true;
-                res.json(tokenData);
+                res.json((0, response_js_1.successResponse)(tokenData, "response token"));
                 return;
             }
         }
@@ -214,31 +218,224 @@ class SocialAuthController {
             return res.status(500).json({ error: 'Failed to fetch Reddit posts' });
         }
     }
-    async saveRedditPost(req, res) {
+    async addRedditPost(req, res) {
         try {
-            const { userId, redditPostId, title, content, subreddit, permalink, thumbnail } = req.body;
-            if (!userId || !redditPostId || !title) {
-                return res.status(400).json({ error: "Missing required post data" });
+            console.log(req.body);
+            const userId = req.userId;
+            console.log(userId);
+            const { platformPostId, author, title, mediaUrls, platformUrl, postedAt, platformData, content } = req.body;
+            if (!userId || !platformPostId || !title) {
+                res.status(400).json({ error: "Missing required post data" });
+                return;
             }
-            // Create data object for the post
             const postData = {
                 userId,
                 platform: socialPlatforms_js_1.SocialPlatform.REDDIT,
-                platformPostId: redditPostId,
+                platformPostId,
                 title,
+                author,
                 content: content || '',
-                subreddit,
-                url: permalink ? `https://reddit.com${permalink}` : '',
-                thumbnail: thumbnail && thumbnail !== 'self' ? thumbnail : null,
+                mediaUrls,
+                platformUrl,
+                postedAt,
+                platformData,
                 createdAt: new Date()
             };
-            // Save the post using the service
-            // const savedPost = await this.socialMediaService.addSocialPost(postData);
-            // return res.status(200).json(successResponse(savedPost, "Reddit post saved successfully"));
+            console.log(postData, 'post data');
+            const savedPost = await this.socialMediaService.createRedditPost(postData);
+            console.log(savedPost, 'saved post');
+            res.status(200).json((0, response_js_1.successResponse)(savedPost, "Reddit post saved successfully"));
         }
         catch (error) {
-            console.error('Error saving Reddit post:', error);
-            return res.status(500).json({ error: 'Failed to save Reddit post' });
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async getFeed(req, res) {
+        try {
+            // Parse query parameters
+            let myUserId = req.userId;
+            const userId = req.query.userId; // Optional - only if viewing a specific user's feed
+            const sources = req.query.sources
+                ? req.query.sources.split(',')
+                : undefined;
+            const sortBy = req.query.sortBy || 'recent';
+            const page = req.query.page ? parseInt(req.query.page) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+            if (!myUserId) {
+                myUserId = '123123123123';
+            }
+            // Get feed items
+            const feedItems = await this.socialMediaService.getFeed({
+                userId,
+                sources,
+                sortBy,
+                page,
+                limit
+            }, myUserId);
+            res.status(200).json({
+                success: true,
+                data: feedItems,
+                message: 'Feed items fetched successfully'
+            });
+            return;
+        }
+        catch (error) {
+            console.error('Error fetching feed:', error);
+            if (error instanceof errors_js_1.AppError) {
+                res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+                return;
+            }
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch feed items'
+            });
+            return;
+        }
+    }
+    async fetchSavedPosts(req, res) {
+        try {
+            const userId = req.userId;
+            if (!userId)
+                throw new errors_js_1.AppError("UserId cannot be found.");
+            const feedItems = await this.socialMediaService.fetchSavedPosts(userId);
+            res.status(200).json({
+                success: true,
+                data: feedItems,
+                message: 'Feed items fetched successfully'
+            });
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async toggleLike(req, res) {
+        try {
+            const postId = req.body.postId;
+            const userId = req.userId;
+            if (!userId) {
+                throw new errors_js_1.AppError("User id not found in jwt", 404);
+            }
+            const response = await this.socialMediaService.toggleLikes(postId, userId);
+            res.status(201).json((0, response_js_1.successResponse)(response));
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async savePost(req, res) {
+        try {
+            const userId = req.userId;
+            if (!userId)
+                throw new errors_js_1.AppError("User id not found ", 404);
+            const postId = req.body.postId;
+            const response = await this.userService.savePostToUser(userId, postId);
+            res.status(200).json(response);
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async submitReport(req, res) {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                throw new errors_js_1.AppError("User Id not found.");
+            }
+            const data = {
+                ...req.body.data,
+                reportedBy: userId
+            };
+            console.log(data);
+            const response = await this.reportService.submitReport(data);
+            res.status(201).json((0, response_js_1.successResponse)(response));
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async fetchReports(req, res) {
+        try {
+            const response = await this.reportService.fetchReports();
+            res.status(200).json((0, response_js_1.successResponse)(response));
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
+        }
+    }
+    async fetchPostById(req, res) {
+        try {
+            const postId = req.params.id;
+            const response = await this.socialMediaService.fetchPostById(postId);
+            res.status(200).json((0, response_js_1.successResponse)(response));
+        }
+        catch (error) {
+            if (error instanceof errors_js_1.AppError) {
+                const statusCode = error.statusCode;
+                const message = error.message || 'An unexpected error occurred';
+                console.log(`Handling AppError: ${message} (status: ${statusCode})`);
+                res.status(statusCode).json((0, response_js_1.errorResponse)(message));
+            }
+            else {
+                console.log('Unknown error occurred', error);
+                res.status(500).json((0, response_js_1.errorResponse)('An unexpected error occurred'));
+            }
         }
     }
 }

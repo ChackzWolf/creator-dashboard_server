@@ -73,7 +73,17 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: false,
         default: ''
-    }
+    },
+    isBlocked: {
+        type: Boolean,
+        default: false
+    },
+    savedPosts: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'SocialPost', // 👈 if you want to populate later
+        }
+    ]
 }, {
     timestamps: true,
 });

@@ -52,16 +52,3 @@ class AuthController {
     ;
 }
 exports.AuthController = AuthController;
-//   async getProfile (req: Request, res: Response): Promise<void>{
-//     try {
-//         let id = req.
-//       const user = await this.authService.getUserById(req.user._id);
-//       res.status(200).json({
-//         _id: user._id,
-//         username: user.username,
-//         email: user.email,
-//       });
-//     } catch (error) {
-//       res.status(404).json({ message: error instanceof Error ? error.message : 'An error occurred' });
-//     }
-//   };

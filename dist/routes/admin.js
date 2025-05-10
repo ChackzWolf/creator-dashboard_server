@@ -1,1 +1,28 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const adminController_1 = require("../controllers/adminController");
+const adminService_1 = require("../services/adminService");
+const admin_repository_1 = require("../repositories/admin.repository");
+const jwt_utils_1 = require("../utils/jwt.utils");
+const reportService_1 = require("../services/reportService");
+const report_repository_1 = require("../repositories/report.repository");
+const userService_1 = require("../services/userService");
+const user_repository_1 = require("../repositories/user.repository");
+const router = express_1.default.Router();
+const adminRepo = new admin_repository_1.AdminRepository();
+const reportRepo = new report_repository_1.ReportedPostRepository();
+const userRepo = new user_repository_1.UserRepository();
+const jwt = new jwt_utils_1.JWT();
+const userService = new userService_1.UserService(userRepo);
+const adminService = new adminService_1.AdminService(adminRepo, jwt);
+const reportService = new reportService_1.ReportService(reportRepo);
+const adminContructor = new adminController_1.AdminController(adminService, reportService, userService);
+router.post('/login', adminContructor.login.bind(adminContructor));
+router.post('/update-report-status', adminContructor.updateReportStatus.bind(adminContructor));
+router.get('/profile', adminContructor.getProfile.bind(adminContructor));
+router.get('/users', adminContructor.getUserList.bind(adminContructor));
+exports.default = router;

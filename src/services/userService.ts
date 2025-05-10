@@ -8,6 +8,7 @@ import { AppError } from '../utils/errors';
 import { UserRole } from '../types/userRoles';
 import { IUserService } from '../interfaces/IServices/IUserService';
 import { Types } from 'mongoose';
+import { response } from 'express';
 
 export class UserService implements IUserService
 {
@@ -17,7 +18,6 @@ export class UserService implements IUserService
     constructor(userRepository: IUserRepository){
         this.userRepository = userRepository
     }
-
   
     async getUserById(id: string):Promise<UserDocument> {
         const user = await this.userRepository.findUserById(id);
@@ -32,10 +32,14 @@ export class UserService implements IUserService
         return response?.savedPosts.includes(new Types.ObjectId(postId)) || false
     }
 
+    async toggleBlockUser(userId: string): Promise<Boolean>{
+        const response = await this.userRepository.toggleBlock(userId)
+        return response
+    }
+
     async fetchUsers(search:any = null):Promise<UserDocument[] | null>{
         const users = await this.userRepository.getUsers(search)
         return users
-
     }
 }
 

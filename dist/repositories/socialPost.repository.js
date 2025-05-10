@@ -4,13 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocialPostRepository = void 0;
-// src/repositories/socialPostRepository.ts
 const mongoose_1 = __importDefault(require("mongoose"));
 const socialPost_js_1 = __importDefault(require("../models/socialPost.js"));
 class SocialPostRepository {
-    /**
-     * Find a post by its database ID
-     */
     async findById(id) {
         try {
             return await socialPost_js_1.default.findById(id);
@@ -20,9 +16,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Find a post by its platform-specific ID
-     */
     async findByPlatformId(userId, platform, platformPostId) {
         try {
             return await socialPost_js_1.default.findOne({
@@ -36,9 +29,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Find all posts with optional filtering and pagination
-     */
     async findAll(filters = {}, page = 1, limit = 20) {
         try {
             const query = this.buildQuery(filters);
@@ -55,9 +45,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Find all posts for a specific user
-     */
     async findByUserId(userId, platform, page = 1, limit = 20) {
         try {
             const query = { userId: new mongoose_1.default.Types.ObjectId(userId) };
@@ -76,9 +63,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Create a new social post
-     */
     async create(postData) {
         try {
             // Handle userId as string or ObjectId
@@ -93,9 +77,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Update an existing social post
-     */
     async update(id, updateData) {
         try {
             // Remove fields that should not be updated
@@ -107,9 +88,6 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Delete a social post
-     */
     async delete(id) {
         try {
             const result = await socialPost_js_1.default.deleteOne({ _id: id });
@@ -120,12 +98,8 @@ class SocialPostRepository {
             throw error;
         }
     }
-    /**
-     * Helper method to build query from filters
-     */
     buildQuery(filters) {
         const query = {};
-        // Handle userId if provided
         if (filters.userId) {
             query.userId = typeof filters.userId === 'string'
                 ? new mongoose_1.default.Types.ObjectId(filters.userId)
@@ -151,6 +125,47 @@ class SocialPostRepository {
             }
         }
         return query;
+    }
+    async findFeedPosts(filters = {}) {
+        try {
+            const query = {};
+            // Filter by user if specified (for user profiles)
+            if (filters.userId) {
+                query.userId = new mongoose_1.default.Types.ObjectId(filters.userId);
+            }
+            // Filter by platforms if specified
+            if (filters.sources && filters.sources.length > 0) {
+                query.platform = { $in: filters.sources };
+            }
+            // Set up sorting
+            const sortOptions = {};
+            if (filters.sortBy === 'popular') {
+                sortOptions.likes = -1; // Sort by most likes
+            }
+            else {
+                // Default to most recent
+                sortOptions.postedAt = -1;
+            }
+            // Set up pagination
+            const page = filters.page || 1;
+            const limit = filters.limit || 20;
+            const skip = (page - 1) * limit;
+            // Execute query
+            const posts = await socialPost_js_1.default.find(query)
+                .sort(sortOptions)
+                .skip(skip)
+                .limit(limit);
+            return posts;
+        }
+        catch (error) {
+            console.error('Error in findFeedPosts:', error);
+            throw error;
+        }
+    }
+    async findPostsByIds(postIds) {
+        return await socialPost_js_1.default.find({
+            _id: { $in: postIds }
+        });
     }
 }
 exports.SocialPostRepository = SocialPostRepository;

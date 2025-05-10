@@ -10,4 +10,5 @@ export interface IUserRepository {
     createUser (username:string, email:string, password:string): Promise<UserDocument | null>
     toggleSavePost(userId: Types.ObjectId | string, postId: Types.ObjectId | string): Promise<IUser | null>
     getUsers(filter:any): Promise<UserDocument[] | null>
+    toggleBlock(userId: Types.ObjectId | string): Promise<Boolean> 
 }

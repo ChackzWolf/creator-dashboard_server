@@ -61,13 +61,27 @@ export class AdminController {
 
     async getUserList(req: Request ,res:Response){
         try {
-            const {search} = req.query;
+            const { search } = req.query;
             console.log(req.query, 'data//////////////////////////')
             const response = await this.userService.fetchUsers(search);
             res.status(200).json(successResponse(response));
         } catch (error) {
             res.status(400).json(errorResponse("Something went wrong."));
 
+        }
+    }
+
+    async toggleBlockUser(req: Request, res: Response){
+        try {
+            console.log('reached here', req.body)
+            const { userId } = req.body
+            if(!userId){
+                throw new AppError("UserId not found.")
+            }
+            const response = await this.userService.toggleBlockUser(userId as string);
+            res.status(201).json(successResponse(response));
+        } catch (error) {
+            res.status(201).json(errorResponse("User ID not found"));
         }
     }
 }

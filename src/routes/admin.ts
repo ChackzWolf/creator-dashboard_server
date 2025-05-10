@@ -20,9 +20,10 @@ const adminContructor = new AdminController(adminService, reportService, userSer
 
 router.post('/login',adminContructor.login.bind(adminContructor));
 router.post('/update-report-status', adminContructor.updateReportStatus.bind(adminContructor))
+router.post('/toggle-block-user', adminContructor.toggleBlockUser.bind(adminContructor));
+router.get('/profile', adminContructor.getProfile.bind(adminContructor));
+router.get('/users', adminContructor.getUserList.bind(adminContructor));
 
-router.get('/profile', adminContructor.getProfile.bind(adminContructor))
-router.get('/users', adminContructor.getUserList.bind(adminContructor))
 
 
 export default router 

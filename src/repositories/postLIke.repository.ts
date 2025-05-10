@@ -32,7 +32,6 @@ export class PostLikeRepository  extends BaseRepository<IPostLike>  implements I
       return await this.count({ postId :objectPostId});
     }
   
-    // ✅ Get paginated likes (important for large posts)
     async getLikesPaginated(postId: Types.ObjectId, page = 1, limit = 10) {
       return await this.model
         .find({ postId })

@@ -126,7 +126,10 @@ SocialPostSchema.methods.toFeedItem = function () {
         likes: this.likes,
         comments: this.comments,
         shares: this.shares,
-        isSaved: true // Since it's being retrieved, we assume it's saved
+        isSaved: true,
+        isLiked: false,
+        platformData: this.platformData,
+        userId: this.userId.toString()
     };
 };
 // Helper method to create from Reddit data
